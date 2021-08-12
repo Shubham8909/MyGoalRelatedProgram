@@ -1,0 +1,153 @@
+package net.one97.processor.utils;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import com.opencsv.CSVReader;
+import net.one97.processor.vo.ImportHeader;
+
+
+public class CsvUtil {
+	private static final Logger logger = LoggerFactory.getLogger(CsvUtil.class);
+
+	public static String hitURL(String msisdn, String url) {
+		logger.info(msisdn + "_[HIT callbackURL] " + url);
+		CloseableHttpClient client = HttpClientUtil.getHttpClientInstance();
+		HttpGet get = new HttpGet(url);
+
+		CloseableHttpResponse httpresponse = null;
+		int statusCode = 0;
+		String rsp = null;
+		long start = System.currentTimeMillis(), end = 0;
+		try {
+			start = System.currentTimeMillis();
+			httpresponse = client.execute(get);
+			statusCode = httpresponse.getStatusLine().getStatusCode();
+			logger.info(msisdn + " httpresponse code " + statusCode);
+			end = System.currentTimeMillis();
+			String responsebody = HttpClientUtil.getResponseString(msisdn, httpresponse);
+			logger.info(msisdn + " responsebody " + responsebody);
+			responsebody = !(StringUtils.isEmpty(responsebody)) ? responsebody.replaceAll("\\r\\n", "") : responsebody;
+			logger.info(msisdn + ":: total time taken " + (end - start));
+			if (statusCode == 200) {
+				if (StringUtils.containsIgnoreCase(responsebody, "SUCCESS")) {
+					rsp = "SUCCESS";
+				} else {
+					rsp = "FAILED";
+				}
+			}
+		} catch (Exception e) {
+			end = System.currentTimeMillis();
+			logger.info(msisdn + "_Exception occured " + (end - start), e);
+			rsp = "Exption while hitting unsub Url";
+			return rsp;
+		} finally {
+			logger.info(msisdn + "_closing all http connection...");
+			get.releaseConnection();
+		}
+
+		return rsp;
+	}
+	public static String createCallbackUrl(String url,ImportHeader importHeader) {
+		logger.info( importHeader.getMsisdn() + "_[CREATING CALLBACK URL]");
+		try {
+			url = StringUtils.replace(url, "{MDN}", importHeader.getMsisdn());
+			url = StringUtils.replace(url, "{PN}", importHeader.getPack_name());
+			url = StringUtils.replace(url, "{PSP}", importHeader.getAmount());
+			url = StringUtils.replace(url, "{ACTN}", importHeader.getAction());
+			url = StringUtils.replace(url, "{ASTS}", importHeader.getAction_status());
+			url = StringUtils.replace(url, "{CHID}", importHeader.getChannel());
+		} catch (Exception e) {
+			logger.error( importHeader.getMsisdn() + "_Exception occured - [" + e.getMessage() + "]",e);
+		}
+		return url;
+	}
+	
+	public static Map<String,List<ImportHeader>> convertCSVFileToBaseImportRecordObject(File file) {
+		logger.info("Started convert Csv File data to Base Import Records data.");
+		Map<String,List<ImportHeader>> chargedMap= new HashMap<String,List<ImportHeader>>();
+		List<ImportHeader> importList = new ArrayList<ImportHeader>();
+		ImportHeader importHeader = null;
+		CSVReader reader = null;
+		try {
+			reader = new CSVReader(new FileReader(file));
+			String[] rowData = null;
+			int j = 0;
+			while ((rowData = reader.readNext()) != null) {
+				importHeader = new ImportHeader();
+				if (j++ == 0) {
+					continue;
+				}
+				importHeader = convertIntoRecordsObject(rowData);
+				if (importHeader != null) {
+					importHeader.setChannel(importHeader.getChannel().replaceAll("\\s", ""));
+					importList.add(importHeader);	
+				}
+			}
+		} catch (FileNotFoundException e) {
+			logger.error("Exception while File is not found." + e.getMessage());
+		} catch (IOException e) {
+			logger.error("Exception while reading data from csv file." + e.getMessage());
+		}
+		logger.info("Size of record list after converted into importbase Object  -" + importList.size());
+		chargedMap.put("IMPORT", importList);
+		return chargedMap;
+	}
+
+	private static ImportHeader convertIntoRecordsObject(String[] rowData) {
+		ImportHeader rcd = new ImportHeader();
+		int i = 0;
+		for (String data : rowData) {
+			i++;
+			switch (i) {
+			case 1:
+				rcd.setId(data);
+				break;
+			case 2:
+				rcd.setMsisdn(data);
+				break;
+			case 3:
+				rcd.setUserText(data);
+				break;
+			case 4:
+				rcd.setChannel(data);
+				break;
+			case 5:
+				rcd.setShort_code(data);
+				break;
+			case 6:
+				rcd.setPack_name(data);
+				break;
+			case 7:
+				rcd.setAction(data);
+				break;
+			case 8:
+				rcd.setAction_status(data);
+				break;
+			case 9:
+				rcd.setAmount(data);
+				break;
+			case 10:
+				rcd.setSource_application(data);
+				break;
+			case 11:
+				rcd.setTransaction_time(data);
+				break;
+			}
+		}
+		return rcd;
+	}
+
+	
+}

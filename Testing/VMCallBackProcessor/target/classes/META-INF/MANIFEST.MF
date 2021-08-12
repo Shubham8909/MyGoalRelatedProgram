@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Implementation-Title: VMCallBackProcessor
+Implementation-Version: 0.0.1-SNAPSHOT
+Built-By: shubhamverma
+Implementation-Vendor-Id: net.one97
+Build-Jdk: 1.8.0_242
+Implementation-URL: http://projects.spring.io/spring-boot/VMCallBackPr
+ ocessor/
+Created-By: Maven Integration for Eclipse
+Implementation-Vendor: Pivotal Software, Inc.
+
