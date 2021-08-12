@@ -1,0 +1,16 @@
+server:
+  port: 7064
+  
+statusCheck:
+    ribbon:
+     listOfServers: localhost:8055,localhost:8054,localhost:8053
+     
+management:
+  endpoints:
+    web:
+      exposure:
+        include:  "*"
+        
+  endpoint:
+    health:
+      show-details: always
