@@ -1,0 +1,9 @@
+USER_REGISTER,Jack
+PROP_REGISTER,Jack,A 3BHK for sale,bellandur,900000,sell,1800sqft,3
+PROP_REGISTER,Jack,A 2BHK for rent,sarjapur,40000,rent,1500sqft,2
+SEARCH_PROP,sarjapur,0-900001,rent,1500sqft,2,price
+SHORTLIST_PROP,2
+VIEW_SHORTLIST,Jack
+SEARCH_PROP,null,null,null,null,0,null
+
+
